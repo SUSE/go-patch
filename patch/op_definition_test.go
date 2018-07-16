@@ -13,19 +13,22 @@ import (
 var _ = Describe("NewOpsFromDefinitions", func() {
 	var (
 		path                    = "/abc"
+		from                    = "/abc"
 		invalidPath             = "abc"
+		invalidFrom             = "abc"
 		errorMsg                = "error"
 		val         interface{} = 123
 		complexVal  interface{} = map[interface{}]interface{}{123: 123}
 		trueBool                = true
 	)
 
-	It("supports 'replace', 'remove', 'test' operations", func() {
+	It("supports 'replace', 'remove', 'test', 'copy' operations", func() {
 		opDefs := []OpDefinition{
 			{Type: "replace", Path: &path, Value: &val},
 			{Type: "remove", Path: &path},
 			{Type: "test", Path: &path, Value: &val},
 			{Type: "test", Path: &path, Absent: &trueBool},
+			{Type: "copy", Path: &path, From: &from},
 		}
 
 		ops, err := NewOpsFromDefinitions(opDefs)
@@ -36,6 +39,7 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 			RemoveOp{Path: MustNewPointerFromString("/abc")},
 			TestOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			TestOp{Path: MustNewPointerFromString("/abc"), Absent: true},
+			CopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
 		})))
 	})
 
@@ -199,6 +203,62 @@ var _ = Describe("NewOpsFromDefinitions", func() {
   "Type": "test",
   "Path": "abc",
   "Value": "<redacted>"
+}`))
+		})
+	})
+
+	Describe("copy", func() {
+		It("requires path", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", From: &from}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Copy operation [0]: Missing path within
+{
+  "Type": "copy",
+  "From": "/abc"
+}`))
+		})
+
+		It("requires from", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Copy operation [0]: Missing from within
+{
+  "Type": "copy",
+  "Path": "/abc"
+}`))
+		})
+
+		It("does not allow value", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path, From: &from, Value: &val}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Copy operation [0]: Cannot specify value within
+{
+  "Type": "copy",
+  "Path": "/abc",
+  "From": "/abc",
+  "Value": "<redacted>"
+}`))
+		})
+
+		It("requires valid path", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &invalidPath, From: &from}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Copy operation [0]: Invalid path: Expected to start with '/' within
+{
+  "Type": "copy",
+  "Path": "abc",
+  "From": "/abc"
+}`))
+		})
+
+		It("requires valid from", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path, From: &invalidFrom}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Copy operation [0]: Invalid from: Expected to start with '/' within
+{
+  "Type": "copy",
+  "Path": "/abc",
+  "From": "abc"
 }`))
 		})
 	})

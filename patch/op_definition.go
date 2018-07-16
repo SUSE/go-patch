@@ -10,6 +10,7 @@ import (
 type OpDefinition struct {
 	Type   string       `json:",omitempty" yaml:",omitempty"`
 	Path   *string      `json:",omitempty" yaml:",omitempty"`
+	From   *string      `json:",omitempty" yaml:",omitempty"`
 	Value  *interface{} `json:",omitempty" yaml:",omitempty"`
 	Absent *bool        `json:",omitempty" yaml:",omitempty"`
 	Error  *string      `json:",omitempty" yaml:",omitempty"`
@@ -44,6 +45,12 @@ func NewOpsFromDefinitions(opDefs []OpDefinition) (Ops, error) {
 			op, err = p.newTestOp(opDef)
 			if err != nil {
 				return nil, fmt.Errorf("Test operation [%d]: %s within\n%s", i, err, opFmt)
+			}
+
+		case "copy":
+			op, err = p.newCopyOp(opDef)
+			if err != nil {
+				return nil, fmt.Errorf("Copy operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
 		default:
@@ -119,6 +126,32 @@ func (parser) newTestOp(opDef OpDefinition) (TestOp, error) {
 	}
 
 	return op, nil
+}
+
+func (parser) newCopyOp(opDef OpDefinition) (CopyOp, error) {
+	if opDef.Path == nil {
+		return CopyOp{}, fmt.Errorf("Missing path")
+	}
+
+	if opDef.From == nil {
+		return CopyOp{}, fmt.Errorf("Missing from")
+	}
+
+	if opDef.Value != nil {
+		return CopyOp{}, fmt.Errorf("Cannot specify value")
+	}
+
+	pathPtr, err := NewPointerFromString(*opDef.Path)
+	if err != nil {
+		return CopyOp{}, fmt.Errorf("Invalid path: %s", err)
+	}
+
+	fromPtr, err := NewPointerFromString(*opDef.From)
+	if err != nil {
+		return CopyOp{}, fmt.Errorf("Invalid from: %s", err)
+	}
+
+	return CopyOp{Path: pathPtr, From: fromPtr}, nil
 }
 
 func (parser) fmtOpDef(opDef OpDefinition) string {
