@@ -245,6 +245,26 @@ func NewOpDefinitionsFromOps(ops Ops) ([]OpDefinition, error) {
 
 			opDefs = append(opDefs, opDef)
 
+		case CopyOp:
+			path := typedOp.Path.String()
+			from := typedOp.From.String()
+
+			opDefs = append(opDefs, OpDefinition{
+				Type: "copy",
+				Path: &path,
+				From: &from,
+			})
+
+		case MoveOp:
+			path := typedOp.Path.String()
+			from := typedOp.From.String()
+
+			opDefs = append(opDefs, OpDefinition{
+				Type: "move",
+				Path: &path,
+				From: &from,
+			})
+
 		default:
 			return nil, fmt.Errorf("Unknown operation [%d] with type '%t'", i, op)
 		}

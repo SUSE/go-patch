@@ -5,6 +5,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
 	"gopkg.in/yaml.v2"
 
 	. "github.com/SUSE/go-patch/patch"
@@ -323,12 +324,14 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 })
 
 var _ = Describe("NewOpDefinitionsFromOps", func() {
-	It("supports 'replace', 'remove', 'test' operations serialized", func() {
+	It("supports 'replace', 'remove', 'test', 'copy', 'move' operations serialized", func() {
 		ops := Ops([]Op{
 			ReplaceOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			RemoveOp{Path: MustNewPointerFromString("/abc")},
 			TestOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			TestOp{Path: MustNewPointerFromString("/abc"), Absent: true},
+			CopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			MoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
 		})
 
 		opDefs, err := NewOpDefinitionsFromOps(ops)
@@ -336,7 +339,7 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
 
 		bs, err := yaml.Marshal(opDefs)
 		Expect(err).ToNot(HaveOccurred())
-
+		format.TruncatedDiff = false
 		Expect("\n" + string(bs)).To(Equal(`
 - type: replace
   path: /abc
@@ -349,6 +352,12 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
 - type: test
   path: /abc
   absent: true
+- type: copy
+  path: /abc
+  from: /abc
+- type: move
+  path: /abc
+  from: /abc
 `))
 
 		bs, err = json.MarshalIndent(opDefs, "", "    ")
@@ -371,6 +380,16 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
         "Type": "test",
         "Path": "/abc",
         "Absent": true
+    },
+    {
+        "Type": "copy",
+        "Path": "/abc",
+        "From": "/abc"
+    },
+    {
+        "Type": "move",
+        "Path": "/abc",
+        "From": "/abc"
     }
 ]`))
 	})
