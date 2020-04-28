@@ -1,11 +1,11 @@
 package patch
 
-type MoveOp struct {
+type QMoveOp struct {
 	Path Pointer
 	From Pointer
 }
 
-func (op MoveOp) Apply(doc interface{}) (interface{}, error) {
+func (op QMoveOp) Apply(doc interface{}) (interface{}, error) {
 	value, err := FindOp{Path: op.From}.Apply(doc)
 	if err != nil {
 		return nil, err

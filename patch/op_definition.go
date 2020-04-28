@@ -47,16 +47,16 @@ func NewOpsFromDefinitions(opDefs []OpDefinition) (Ops, error) {
 				return nil, fmt.Errorf("Test operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
-		case "copy":
-			op, err = p.newCopyOp(opDef)
+		case "qcopy":
+			op, err = p.newQCopyOp(opDef)
 			if err != nil {
-				return nil, fmt.Errorf("Copy operation [%d]: %s within\n%s", i, err, opFmt)
+				return nil, fmt.Errorf("QCopy operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
-		case "move":
-			op, err = p.newMoveOp(opDef)
+		case "qmove":
+			op, err = p.newQMoveOp(opDef)
 			if err != nil {
-				return nil, fmt.Errorf("Move operation [%d]: %s within\n%s", i, err, opFmt)
+				return nil, fmt.Errorf("QMove operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
 		default:
@@ -134,56 +134,56 @@ func (parser) newTestOp(opDef OpDefinition) (TestOp, error) {
 	return op, nil
 }
 
-func (parser) newCopyOp(opDef OpDefinition) (CopyOp, error) {
+func (parser) newQCopyOp(opDef OpDefinition) (QCopyOp, error) {
 	if opDef.Path == nil {
-		return CopyOp{}, fmt.Errorf("Missing path")
+		return QCopyOp{}, fmt.Errorf("Missing path")
 	}
 
 	if opDef.From == nil {
-		return CopyOp{}, fmt.Errorf("Missing from")
+		return QCopyOp{}, fmt.Errorf("Missing from")
 	}
 
 	if opDef.Value != nil {
-		return CopyOp{}, fmt.Errorf("Cannot specify value")
+		return QCopyOp{}, fmt.Errorf("Cannot specify value")
 	}
 
 	pathPtr, err := NewPointerFromString(*opDef.Path)
 	if err != nil {
-		return CopyOp{}, fmt.Errorf("Invalid path: %s", err)
+		return QCopyOp{}, fmt.Errorf("Invalid path: %s", err)
 	}
 
 	fromPtr, err := NewPointerFromString(*opDef.From)
 	if err != nil {
-		return CopyOp{}, fmt.Errorf("Invalid from: %s", err)
+		return QCopyOp{}, fmt.Errorf("Invalid from: %s", err)
 	}
 
-	return CopyOp{Path: pathPtr, From: fromPtr}, nil
+	return QCopyOp{Path: pathPtr, From: fromPtr}, nil
 }
 
-func (parser) newMoveOp(opDef OpDefinition) (MoveOp, error) {
+func (parser) newQMoveOp(opDef OpDefinition) (QMoveOp, error) {
 	if opDef.Path == nil {
-		return MoveOp{}, fmt.Errorf("Missing path")
+		return QMoveOp{}, fmt.Errorf("Missing path")
 	}
 
 	if opDef.From == nil {
-		return MoveOp{}, fmt.Errorf("Missing from")
+		return QMoveOp{}, fmt.Errorf("Missing from")
 	}
 
 	if opDef.Value != nil {
-		return MoveOp{}, fmt.Errorf("Cannot specify value")
+		return QMoveOp{}, fmt.Errorf("Cannot specify value")
 	}
 
 	pathPtr, err := NewPointerFromString(*opDef.Path)
 	if err != nil {
-		return MoveOp{}, fmt.Errorf("Invalid path: %s", err)
+		return QMoveOp{}, fmt.Errorf("Invalid path: %s", err)
 	}
 
 	fromPtr, err := NewPointerFromString(*opDef.From)
 	if err != nil {
-		return MoveOp{}, fmt.Errorf("Invalid from: %s", err)
+		return QMoveOp{}, fmt.Errorf("Invalid from: %s", err)
 	}
 
-	return MoveOp{Path: pathPtr, From: fromPtr}, nil
+	return QMoveOp{Path: pathPtr, From: fromPtr}, nil
 }
 
 func (parser) fmtOpDef(opDef OpDefinition) string {
@@ -245,22 +245,22 @@ func NewOpDefinitionsFromOps(ops Ops) ([]OpDefinition, error) {
 
 			opDefs = append(opDefs, opDef)
 
-		case CopyOp:
+		case QCopyOp:
 			path := typedOp.Path.String()
 			from := typedOp.From.String()
 
 			opDefs = append(opDefs, OpDefinition{
-				Type: "copy",
+				Type: "qcopy",
 				Path: &path,
 				From: &from,
 			})
 
-		case MoveOp:
+		case QMoveOp:
 			path := typedOp.Path.String()
 			from := typedOp.From.String()
 
 			opDefs = append(opDefs, OpDefinition{
-				Type: "move",
+				Type: "qmove",
 				Path: &path,
 				From: &from,
 			})

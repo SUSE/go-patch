@@ -7,10 +7,10 @@ import (
 	. "github.com/SUSE/go-patch/patch"
 )
 
-var _ = Describe("CopyOp.Apply", func() {
+var _ = Describe("QCopyOp.Apply", func() {
 	Describe("array item", func() {
 		It("replaces array item", func() {
-			res, err := CopyOp{
+			res, err := QCopyOp{
 				Path: MustNewPointerFromString("/-"),
 				From: MustNewPointerFromString("/0"),
 			}.Apply([]interface{}{1, 2, 3})
@@ -26,7 +26,7 @@ var _ = Describe("CopyOp.Apply", func() {
 				"xyz": "xyz",
 			}
 
-			res, err := CopyOp{
+			res, err := QCopyOp{
 				From: MustNewPointerFromString("/abc"),
 				Path: MustNewPointerFromString("/def?"),
 			}.Apply(doc)

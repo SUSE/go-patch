@@ -23,14 +23,14 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 		trueBool                = true
 	)
 
-	It("supports 'replace', 'remove', 'test', 'copy', 'move' operations", func() {
+	It("supports 'replace', 'remove', 'test', 'qcopy', 'qmove' operations", func() {
 		opDefs := []OpDefinition{
 			{Type: "replace", Path: &path, Value: &val},
 			{Type: "remove", Path: &path},
 			{Type: "test", Path: &path, Value: &val},
 			{Type: "test", Path: &path, Absent: &trueBool},
-			{Type: "copy", Path: &path, From: &from},
-			{Type: "move", Path: &path, From: &from},
+			{Type: "qcopy", Path: &path, From: &from},
+			{Type: "qmove", Path: &path, From: &from},
 		}
 
 		ops, err := NewOpsFromDefinitions(opDefs)
@@ -41,8 +41,8 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 			RemoveOp{Path: MustNewPointerFromString("/abc")},
 			TestOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			TestOp{Path: MustNewPointerFromString("/abc"), Absent: true},
-			CopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
-			MoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			QCopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			QMoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
 		})))
 	})
 
@@ -210,33 +210,33 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 		})
 	})
 
-	Describe("copy", func() {
+	Describe("qcopy", func() {
 		It("requires path", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", From: &from}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qcopy", From: &from}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Copy operation [0]: Missing path within
+			Expect(err.Error()).To(Equal(`QCopy operation [0]: Missing path within
 {
-  "Type": "copy",
+  "Type": "qcopy",
   "From": "/abc"
 }`))
 		})
 
 		It("requires from", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qcopy", Path: &path}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Copy operation [0]: Missing from within
+			Expect(err.Error()).To(Equal(`QCopy operation [0]: Missing from within
 {
-  "Type": "copy",
+  "Type": "qcopy",
   "Path": "/abc"
 }`))
 		})
 
 		It("does not allow value", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path, From: &from, Value: &val}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qcopy", Path: &path, From: &from, Value: &val}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Copy operation [0]: Cannot specify value within
+			Expect(err.Error()).To(Equal(`QCopy operation [0]: Cannot specify value within
 {
-  "Type": "copy",
+  "Type": "qcopy",
   "Path": "/abc",
   "From": "/abc",
   "Value": "<redacted>"
@@ -244,55 +244,55 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 		})
 
 		It("requires valid path", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &invalidPath, From: &from}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qcopy", Path: &invalidPath, From: &from}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Copy operation [0]: Invalid path: Expected to start with '/' within
+			Expect(err.Error()).To(Equal(`QCopy operation [0]: Invalid path: Expected to start with '/' within
 {
-  "Type": "copy",
+  "Type": "qcopy",
   "Path": "abc",
   "From": "/abc"
 }`))
 		})
 
 		It("requires valid from", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "copy", Path: &path, From: &invalidFrom}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qcopy", Path: &path, From: &invalidFrom}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Copy operation [0]: Invalid from: Expected to start with '/' within
+			Expect(err.Error()).To(Equal(`QCopy operation [0]: Invalid from: Expected to start with '/' within
 {
-  "Type": "copy",
+  "Type": "qcopy",
   "Path": "/abc",
   "From": "abc"
 }`))
 		})
 	})
 
-	Describe("move", func() {
+	Describe("qmove", func() {
 		It("requires path", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", From: &from}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qmove", From: &from}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Move operation [0]: Missing path within
+			Expect(err.Error()).To(Equal(`QMove operation [0]: Missing path within
 {
-  "Type": "move",
+  "Type": "qmove",
   "From": "/abc"
 }`))
 		})
 
 		It("requires from", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qmove", Path: &path}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Move operation [0]: Missing from within
+			Expect(err.Error()).To(Equal(`QMove operation [0]: Missing from within
 {
-  "Type": "move",
+  "Type": "qmove",
   "Path": "/abc"
 }`))
 		})
 
 		It("does not allow value", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path, From: &from, Value: &val}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qmove", Path: &path, From: &from, Value: &val}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Move operation [0]: Cannot specify value within
+			Expect(err.Error()).To(Equal(`QMove operation [0]: Cannot specify value within
 {
-  "Type": "move",
+  "Type": "qmove",
   "Path": "/abc",
   "From": "/abc",
   "Value": "<redacted>"
@@ -300,22 +300,22 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 		})
 
 		It("requires valid path", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &invalidPath, From: &from}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qmove", Path: &invalidPath, From: &from}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Move operation [0]: Invalid path: Expected to start with '/' within
+			Expect(err.Error()).To(Equal(`QMove operation [0]: Invalid path: Expected to start with '/' within
 {
-  "Type": "move",
+  "Type": "qmove",
   "Path": "abc",
   "From": "/abc"
 }`))
 		})
 
 		It("requires valid from", func() {
-			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path, From: &invalidFrom}})
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "qmove", Path: &path, From: &invalidFrom}})
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal(`Move operation [0]: Invalid from: Expected to start with '/' within
+			Expect(err.Error()).To(Equal(`QMove operation [0]: Invalid from: Expected to start with '/' within
 {
-  "Type": "move",
+  "Type": "qmove",
   "Path": "/abc",
   "From": "abc"
 }`))
@@ -324,14 +324,14 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 })
 
 var _ = Describe("NewOpDefinitionsFromOps", func() {
-	It("supports 'replace', 'remove', 'test', 'copy', 'move' operations serialized", func() {
+	It("supports 'replace', 'remove', 'test', 'qcopy', 'qmove' operations serialized", func() {
 		ops := Ops([]Op{
 			ReplaceOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			RemoveOp{Path: MustNewPointerFromString("/abc")},
 			TestOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			TestOp{Path: MustNewPointerFromString("/abc"), Absent: true},
-			CopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
-			MoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			QCopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			QMoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
 		})
 
 		opDefs, err := NewOpDefinitionsFromOps(ops)
@@ -352,10 +352,10 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
 - type: test
   path: /abc
   absent: true
-- type: copy
+- type: qcopy
   path: /abc
   from: /abc
-- type: move
+- type: qmove
   path: /abc
   from: /abc
 `))
@@ -382,12 +382,12 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
         "Absent": true
     },
     {
-        "Type": "copy",
+        "Type": "qcopy",
         "Path": "/abc",
         "From": "/abc"
     },
     {
-        "Type": "move",
+        "Type": "qmove",
         "Path": "/abc",
         "From": "/abc"
     }

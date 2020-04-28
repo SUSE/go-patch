@@ -7,10 +7,10 @@ import (
 	. "github.com/SUSE/go-patch/patch"
 )
 
-var _ = Describe("MoveOp.Apply", func() {
+var _ = Describe("QMoveOp.Apply", func() {
 	Describe("array item", func() {
 		It("moves array item", func() {
-			res, err := MoveOp{
+			res, err := QMoveOp{
 				Path: MustNewPointerFromString("/-"),
 				From: MustNewPointerFromString("/0"),
 			}.Apply([]interface{}{1, 2, 3})
@@ -26,7 +26,7 @@ var _ = Describe("MoveOp.Apply", func() {
 				"xyz": "xyz",
 			}
 
-			res, err := MoveOp{
+			res, err := QMoveOp{
 				From: MustNewPointerFromString("/abc"),
 				Path: MustNewPointerFromString("/def?"),
 			}.Apply(doc)
