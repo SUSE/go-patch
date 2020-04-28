@@ -53,6 +53,12 @@ func NewOpsFromDefinitions(opDefs []OpDefinition) (Ops, error) {
 				return nil, fmt.Errorf("Copy operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
+		case "move":
+			op, err = p.newMoveOp(opDef)
+			if err != nil {
+				return nil, fmt.Errorf("Move operation [%d]: %s within\n%s", i, err, opFmt)
+			}
+
 		default:
 			return nil, fmt.Errorf("Unknown operation [%d] with type '%s' within\n%s", i, opDef.Type, opFmt)
 		}
@@ -152,6 +158,32 @@ func (parser) newCopyOp(opDef OpDefinition) (CopyOp, error) {
 	}
 
 	return CopyOp{Path: pathPtr, From: fromPtr}, nil
+}
+
+func (parser) newMoveOp(opDef OpDefinition) (MoveOp, error) {
+	if opDef.Path == nil {
+		return MoveOp{}, fmt.Errorf("Missing path")
+	}
+
+	if opDef.From == nil {
+		return MoveOp{}, fmt.Errorf("Missing from")
+	}
+
+	if opDef.Value != nil {
+		return MoveOp{}, fmt.Errorf("Cannot specify value")
+	}
+
+	pathPtr, err := NewPointerFromString(*opDef.Path)
+	if err != nil {
+		return MoveOp{}, fmt.Errorf("Invalid path: %s", err)
+	}
+
+	fromPtr, err := NewPointerFromString(*opDef.From)
+	if err != nil {
+		return MoveOp{}, fmt.Errorf("Invalid from: %s", err)
+	}
+
+	return MoveOp{Path: pathPtr, From: fromPtr}, nil
 }
 
 func (parser) fmtOpDef(opDef OpDefinition) string {

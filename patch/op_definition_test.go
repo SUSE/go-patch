@@ -22,13 +22,14 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 		trueBool                = true
 	)
 
-	It("supports 'replace', 'remove', 'test', 'copy' operations", func() {
+	It("supports 'replace', 'remove', 'test', 'copy', 'move' operations", func() {
 		opDefs := []OpDefinition{
 			{Type: "replace", Path: &path, Value: &val},
 			{Type: "remove", Path: &path},
 			{Type: "test", Path: &path, Value: &val},
 			{Type: "test", Path: &path, Absent: &trueBool},
 			{Type: "copy", Path: &path, From: &from},
+			{Type: "move", Path: &path, From: &from},
 		}
 
 		ops, err := NewOpsFromDefinitions(opDefs)
@@ -40,6 +41,7 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 			TestOp{Path: MustNewPointerFromString("/abc"), Value: 123},
 			TestOp{Path: MustNewPointerFromString("/abc"), Absent: true},
 			CopyOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
+			MoveOp{Path: MustNewPointerFromString("/abc"), From: MustNewPointerFromString("/abc")},
 		})))
 	})
 
@@ -257,6 +259,62 @@ var _ = Describe("NewOpsFromDefinitions", func() {
 			Expect(err.Error()).To(Equal(`Copy operation [0]: Invalid from: Expected to start with '/' within
 {
   "Type": "copy",
+  "Path": "/abc",
+  "From": "abc"
+}`))
+		})
+	})
+
+	Describe("move", func() {
+		It("requires path", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", From: &from}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Move operation [0]: Missing path within
+{
+  "Type": "move",
+  "From": "/abc"
+}`))
+		})
+
+		It("requires from", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Move operation [0]: Missing from within
+{
+  "Type": "move",
+  "Path": "/abc"
+}`))
+		})
+
+		It("does not allow value", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path, From: &from, Value: &val}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Move operation [0]: Cannot specify value within
+{
+  "Type": "move",
+  "Path": "/abc",
+  "From": "/abc",
+  "Value": "<redacted>"
+}`))
+		})
+
+		It("requires valid path", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &invalidPath, From: &from}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Move operation [0]: Invalid path: Expected to start with '/' within
+{
+  "Type": "move",
+  "Path": "abc",
+  "From": "/abc"
+}`))
+		})
+
+		It("requires valid from", func() {
+			_, err := NewOpsFromDefinitions([]OpDefinition{{Type: "move", Path: &path, From: &invalidFrom}})
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal(`Move operation [0]: Invalid from: Expected to start with '/' within
+{
+  "Type": "move",
   "Path": "/abc",
   "From": "abc"
 }`))
