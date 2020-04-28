@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	. "github.com/cppforlife/go-patch/patch"
+	. "github.com/SUSE/go-patch/patch"
 )
 
 var _ = Describe("Diff.Calculate", func() {
