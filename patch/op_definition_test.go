@@ -5,7 +5,6 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/format"
 	"gopkg.in/yaml.v2"
 
 	. "github.com/SUSE/go-patch/patch"
@@ -339,7 +338,6 @@ var _ = Describe("NewOpDefinitionsFromOps", func() {
 
 		bs, err := yaml.Marshal(opDefs)
 		Expect(err).ToNot(HaveOccurred())
-		format.TruncatedDiff = false
 		Expect("\n" + string(bs)).To(Equal(`
 - type: replace
   path: /abc
