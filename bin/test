@@ -2,6 +2,6 @@
 
 set -e
 
-go fmt github.com/cppforlife/go-patch/...
+go fmt github.com/SUSE/go-patch/...
 
 ginkgo -trace -r patch/

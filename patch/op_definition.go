@@ -10,6 +10,7 @@ import (
 type OpDefinition struct {
 	Type   string       `json:",omitempty" yaml:",omitempty"`
 	Path   *string      `json:",omitempty" yaml:",omitempty"`
+	From   *string      `json:",omitempty" yaml:",omitempty"`
 	Value  *interface{} `json:",omitempty" yaml:",omitempty"`
 	Absent *bool        `json:",omitempty" yaml:",omitempty"`
 	Error  *string      `json:",omitempty" yaml:",omitempty"`
@@ -44,6 +45,18 @@ func NewOpsFromDefinitions(opDefs []OpDefinition) (Ops, error) {
 			op, err = p.newTestOp(opDef)
 			if err != nil {
 				return nil, fmt.Errorf("Test operation [%d]: %s within\n%s", i, err, opFmt)
+			}
+
+		case "qcopy":
+			op, err = p.newQCopyOp(opDef)
+			if err != nil {
+				return nil, fmt.Errorf("QCopy operation [%d]: %s within\n%s", i, err, opFmt)
+			}
+
+		case "qmove":
+			op, err = p.newQMoveOp(opDef)
+			if err != nil {
+				return nil, fmt.Errorf("QMove operation [%d]: %s within\n%s", i, err, opFmt)
 			}
 
 		default:
@@ -121,6 +134,58 @@ func (parser) newTestOp(opDef OpDefinition) (TestOp, error) {
 	return op, nil
 }
 
+func (parser) newQCopyOp(opDef OpDefinition) (QCopyOp, error) {
+	if opDef.Path == nil {
+		return QCopyOp{}, fmt.Errorf("Missing path")
+	}
+
+	if opDef.From == nil {
+		return QCopyOp{}, fmt.Errorf("Missing from")
+	}
+
+	if opDef.Value != nil {
+		return QCopyOp{}, fmt.Errorf("Cannot specify value")
+	}
+
+	pathPtr, err := NewPointerFromString(*opDef.Path)
+	if err != nil {
+		return QCopyOp{}, fmt.Errorf("Invalid path: %s", err)
+	}
+
+	fromPtr, err := NewPointerFromString(*opDef.From)
+	if err != nil {
+		return QCopyOp{}, fmt.Errorf("Invalid from: %s", err)
+	}
+
+	return QCopyOp{Path: pathPtr, From: fromPtr}, nil
+}
+
+func (parser) newQMoveOp(opDef OpDefinition) (QMoveOp, error) {
+	if opDef.Path == nil {
+		return QMoveOp{}, fmt.Errorf("Missing path")
+	}
+
+	if opDef.From == nil {
+		return QMoveOp{}, fmt.Errorf("Missing from")
+	}
+
+	if opDef.Value != nil {
+		return QMoveOp{}, fmt.Errorf("Cannot specify value")
+	}
+
+	pathPtr, err := NewPointerFromString(*opDef.Path)
+	if err != nil {
+		return QMoveOp{}, fmt.Errorf("Invalid path: %s", err)
+	}
+
+	fromPtr, err := NewPointerFromString(*opDef.From)
+	if err != nil {
+		return QMoveOp{}, fmt.Errorf("Invalid from: %s", err)
+	}
+
+	return QMoveOp{Path: pathPtr, From: fromPtr}, nil
+}
+
 func (parser) fmtOpDef(opDef OpDefinition) string {
 	var (
 		redactedVal interface{} = "<redacted>"
@@ -179,6 +244,26 @@ func NewOpDefinitionsFromOps(ops Ops) ([]OpDefinition, error) {
 			}
 
 			opDefs = append(opDefs, opDef)
+
+		case QCopyOp:
+			path := typedOp.Path.String()
+			from := typedOp.From.String()
+
+			opDefs = append(opDefs, OpDefinition{
+				Type: "qcopy",
+				Path: &path,
+				From: &from,
+			})
+
+		case QMoveOp:
+			path := typedOp.Path.String()
+			from := typedOp.From.String()
+
+			opDefs = append(opDefs, OpDefinition{
+				Type: "qmove",
+				Path: &path,
+				From: &from,
+			})
 
 		default:
 			return nil, fmt.Errorf("Unknown operation [%d] with type '%t'", i, op)
